@@ -96,9 +96,7 @@ public class Tuple implements Serializable {
     /**
      * Returns the contents of this Tuple as a string. Note that to pass the
      * system tests, the format needs to be as follows:
-     *
      * column1\tcolumn2\tcolumn3\t...\tcolumnN
-     *
      * where \t is any whitespace (except a newline)
      */
     public String toString() {
