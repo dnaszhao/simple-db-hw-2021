@@ -46,7 +46,6 @@ public class TupleDesc implements Serializable {
      * */
     public Iterator<TDItem> iterator() {
         // some code goes here
-
         return TDItems.iterator();
     }
 
@@ -69,7 +68,6 @@ public class TupleDesc implements Serializable {
         for (int i = 0; i < fieldAr.length; i++) {
             TDItems.add(new TDItem(typeAr[i], fieldAr[i]));
         }
-
     }
 
     /**

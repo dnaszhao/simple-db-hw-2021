@@ -13,7 +13,7 @@ public class Tuple implements Serializable {
     private static final long serialVersionUID = 1L;
     private TupleDesc tupleDesc;
     private RecordId recordId;
-    private List<Field> fields;
+    private final List<Field> fields;
     /**
      * Create a new tuple with the specified schema (type).
      *
@@ -103,7 +103,7 @@ public class Tuple implements Serializable {
         // some code goes here
         StringBuilder sb = new StringBuilder();
         for (Field f : fields) {
-            sb.append(f.toString() + " ");
+            sb.append(f.toString()).append(" ");
         }
         return sb.toString();
         // throw new UnsupportedOperationException("Implement this");
