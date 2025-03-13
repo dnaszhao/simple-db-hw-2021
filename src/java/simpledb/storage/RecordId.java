@@ -9,8 +9,8 @@ import java.io.Serializable;
 public class RecordId implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private PageId pid;
-    private int tupleno;
+    PageId pid;
+    int tupleno;
     /**
      * Creates a new RecordId referring to the specified PageId and tuple
      * number.
@@ -39,7 +39,7 @@ public class RecordId implements Serializable {
      */
     public PageId getPageId() {
         // some code goes here
-        return pid;
+        return this.pid;
     }
 
     /**
@@ -51,15 +51,14 @@ public class RecordId implements Serializable {
     @Override
     public boolean equals(Object o) {
         // some code goes here
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null)
+            return false;
+        if (o == this)
+            return true;
+        if (!(o instanceof RecordId))
+            return false;
         RecordId that = (RecordId) o;
-        for (int i = 0; i < this.tupleno; i++) {
-            if (!this.pid.equals(that.pid)) {
-                return false;
-            }
-        }
-        return true;
+        return this.pid.equals(that.pid) && this.tupleno == that.tupleno;
     }
 
     /**
@@ -71,7 +70,7 @@ public class RecordId implements Serializable {
     @Override
     public int hashCode() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return this.pid.hashCode();
 
     }
 

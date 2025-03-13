@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * The BufferPool is also responsible for locking;  when a transaction fetches
  * a page, BufferPool checks that the transaction has the appropriate
  * locks to read/write the page.
- * 
+ *
  * @Threadsafe, all fields are final
  */
 public class BufferPool {
@@ -27,12 +27,13 @@ public class BufferPool {
     private static final int DEFAULT_PAGE_SIZE = 4096;
 
     private static int pageSize = DEFAULT_PAGE_SIZE;
-    
-    /** Default number of pages passed to the constructor. This is used by
-    other classes. BufferPool should use the numPages argument to the
-    constructor instead. */
-    public static final int DEFAULT_PAGES = 50;
 
+    /** Default number of pages passed to the constructor. This is used by
+     other classes. BufferPool should use the numPages argument to the
+     constructor instead. */
+    public static final int DEFAULT_PAGES = 50;
+    // 页面缓存
+    private ConcurrentHashMap<Integer, Page> pageMap;
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -40,20 +41,21 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // some code goes here
+        pageMap = new ConcurrentHashMap<>(numPages);
     }
-    
+
     public static int getPageSize() {
-      return pageSize;
+        return pageSize;
     }
-    
+
     // THIS FUNCTION SHOULD ONLY BE USED FOR TESTING!!
     public static void setPageSize(int pageSize) {
-    	BufferPool.pageSize = pageSize;
+        BufferPool.pageSize = pageSize;
     }
-    
+
     // THIS FUNCTION SHOULD ONLY BE USED FOR TESTING!!
     public static void resetPageSize() {
-    	BufferPool.pageSize = DEFAULT_PAGE_SIZE;
+        BufferPool.pageSize = DEFAULT_PAGE_SIZE;
     }
 
     /**
@@ -72,9 +74,22 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
-        throws TransactionAbortedException, DbException {
+            throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        // 检查缓存中是否已有该页面
+        Page page = null;
+        if (!pageMap.containsKey(pid.hashCode())){
+            DbFile dbDile = Database.getCatalog().getDatabaseFile(pid.getTableId());
+            page = dbDile.readPage(pid);
+            pageMap.put(pid.hashCode(), page);
+        }
+
+        // 如果缓存已满，淘汰一个页面
+
+
+        // 从磁盘读取页面并添加到缓存
+
+        return page == null ? null : pageMap.get(pid.hashCode());
     }
 
     /**
@@ -125,7 +140,7 @@ public class BufferPool {
      * acquire a write lock on the page the tuple is added to and any other 
      * pages that are updated (Lock acquisition is not needed for lab2). 
      * May block if the lock(s) cannot be acquired.
-     * 
+     *
      * Marks any pages that were dirtied by the operation as dirty by calling
      * their markDirty bit, and adds versions of any pages that have 
      * been dirtied to the cache (replacing any existing versions of those pages) so 
@@ -136,7 +151,7 @@ public class BufferPool {
      * @param t the tuple to add
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
-        throws DbException, IOException, TransactionAbortedException {
+            throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
     }
@@ -155,7 +170,7 @@ public class BufferPool {
      * @param t the tuple to delete
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
-        throws DbException, IOException, TransactionAbortedException {
+            throws DbException, IOException, TransactionAbortedException {
         // some code goes here
         // not necessary for lab1
     }
@@ -172,13 +187,13 @@ public class BufferPool {
     }
 
     /** Remove the specific page id from the buffer pool.
-        Needed by the recovery manager to ensure that the
-        buffer pool doesn't keep a rolled back page in its
-        cache.
-        
-        Also used by B+ tree files to ensure that deleted pages
-        are removed from the cache so they can be reused safely
-    */
+     Needed by the recovery manager to ensure that the
+     buffer pool doesn't keep a rolled back page in its
+     cache.
+
+     Also used by B+ tree files to ensure that deleted pages
+     are removed from the cache so they can be reused safely
+     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // not necessary for lab1

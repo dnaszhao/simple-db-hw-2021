@@ -104,11 +104,11 @@ public class Catalog {
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
         // some code goes here
-        if(tables.containsKey(tableid)) {
-            Table table = tables.get(tableid);
+        Table table = tables.get(tableid);
+        if (table != null) {
             return table.file.getTupleDesc();
         }
-        throw new NoSuchElementException();
+        throw new NoSuchElementException("Table with id " + tableid + " does not exist");
     }
 
     /**
