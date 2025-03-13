@@ -88,8 +88,10 @@ public class BufferPool {
 
 
         // 从磁盘读取页面并添加到缓存
-
-        return page == null ? null : pageMap.get(pid.hashCode());
+        else {
+            page = pageMap.get(pid.hashCode());
+        }
+        return page;
     }
 
     /**
