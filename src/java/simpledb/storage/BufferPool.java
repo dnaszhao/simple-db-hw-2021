@@ -85,7 +85,8 @@ public class BufferPool {
         }
 
         // 如果缓存已满，淘汰一个页面
-
+        if (pageMap.size() >= DEFAULT_PAGES)
+            System.out.println("BufferPool is full");
 
         // 从磁盘读取页面并添加到缓存
         else {
