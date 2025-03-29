@@ -5,19 +5,21 @@ import simpledb.common.DbException;
 import simpledb.storage.Tuple;
 import simpledb.storage.TupleDesc;
 
-import java.util.*;
-
 /**
  * The Join operator implements the relational join operation.
  */
 public class Join extends Operator {
 
     private static final long serialVersionUID = 1L;
+    private JoinPredicate p;
+    private OpIterator child1;
+    private OpIterator child2;
+    private Tuple currentTuple1;
 
     /**
      * Constructor. Accepts two children to join and the predicate to join them
      * on
-     * 
+     *
      * @param p
      *            The predicate to use to join the children
      * @param child1
@@ -26,12 +28,14 @@ public class Join extends Operator {
      *            Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, OpIterator child1, OpIterator child2) {
-        // some code goes here
+        this.p = p;
+        this.child1 = child1;
+        this.child2 = child2;
+        this.currentTuple1 = null;
     }
 
     public JoinPredicate getJoinPredicate() {
-        // some code goes here
-        return null;
+        return p;
     }
 
     /**
@@ -40,8 +44,7 @@ public class Join extends Operator {
      *       alias or table name.
      * */
     public String getJoinField1Name() {
-        // some code goes here
-        return null;
+        return child1.getTupleDesc().getFieldName(p.getField1());
     }
 
     /**
@@ -50,8 +53,7 @@ public class Join extends Operator {
      *       alias or table name.
      * */
     public String getJoinField2Name() {
-        // some code goes here
-        return null;
+        return child2.getTupleDesc().getFieldName(p.getField2());
     }
 
     /**
@@ -59,21 +61,25 @@ public class Join extends Operator {
      *      implementation logic.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
     }
 
-    public void open() throws DbException, NoSuchElementException,
-            TransactionAbortedException {
-        // some code goes here
+    public void open() throws DbException, TransactionAbortedException {
+        super.open();
+        child1.open();
+        child2.open();
     }
 
     public void close() {
-        // some code goes here
+        super.close();
+        child1.close();
+        child2.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        child1.rewind();
+        child2.rewind();
+        currentTuple1 = null;
     }
 
     /**
@@ -90,24 +96,59 @@ public class Join extends Operator {
      * <p>
      * For example, if one tuple is {1,2,3} and the other tuple is {1,5,6},
      * joined on equality of the first column, then this returns {1,2,3,1,5,6}.
-     * 
+     *
      * @return The next matching tuple.
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        if (currentTuple1 == null && !child1.hasNext()) {
+            return null;
+        }
+
+        if (currentTuple1 == null) {
+            currentTuple1 = child1.next();
+        }
+
+        while (true) {
+            if (child2.hasNext()) {
+                Tuple tuple2 = child2.next();
+                if (p.filter(currentTuple1, tuple2)) {
+                    TupleDesc tupleDesc = getTupleDesc();
+                    Tuple tuple = new Tuple(tupleDesc);
+                    for (int i = 0; i < tupleDesc.numFields(); i++) {
+                        if (i < currentTuple1.getTupleDesc().numFields()) {
+                            tuple.setField(i, currentTuple1.getField(i));
+                        } else {
+                            tuple.setField(i, tuple2.getField(i - currentTuple1.getTupleDesc().numFields()));
+                        }
+                    }
+                    return tuple;
+                }
+            } else {
+                if (child1.hasNext()) {
+                    currentTuple1 = child1.next();
+                    child2.rewind();
+                } else {
+                    return null;
+                }
+            }
+        }
     }
 
     @Override
     public OpIterator[] getChildren() {
-        // some code goes here
-        return null;
+        OpIterator[] opIterators = new OpIterator[2];
+        opIterators[0] = child1;
+        opIterators[1] = child2;
+        return opIterators;
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
-        // some code goes here
+        if (children == null || children.length != 2) {
+            throw new IllegalArgumentException("Expected exactly two child operators");
+        }
+        this.child1 = children[0];
+        this.child2 = children[1];
     }
-
 }
